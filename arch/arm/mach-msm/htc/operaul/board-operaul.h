@@ -222,4 +222,4 @@ int __init operaul_init_mmc(void);
 int __init operaul_wifi_init(void);
 void __init operaul_init_cam(void);
 void operaul_init_fb(void);
-void operaul_init_gpu(void);
+

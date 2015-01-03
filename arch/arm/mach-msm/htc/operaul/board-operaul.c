@@ -4206,7 +4206,7 @@ static void __init operaul_init(void)
 
 	msm8930_i2c_init();
 	operaul_init_fb();
-	operaul_init_gpu();
+	msm8930_init_gpu();
 	if (cpu_is_msm8930ab())
 		msm8930ab_update_krait_spm();
 	if (cpu_is_krait_v3()) {
