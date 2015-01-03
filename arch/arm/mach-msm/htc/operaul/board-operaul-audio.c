@@ -60,14 +60,13 @@ static int msm8930_slim_0_tx_ch = 1;
 static int msm8930_ext_spk_pamp;
 static int msm8930_btsco_rate = BTSCO_RATE_8KHZ;
 static int msm8930_btsco_ch = 1;
-static int aux_pcm_open = 0;
 
-static struct mutex aux_pcm_mutex;
 static struct clk *codec_clk;
 static int clk_users;
 
 static struct snd_soc_jack hs_jack;
 static struct snd_soc_jack button_jack;
+static atomic_t auxpcm_rsc_ref;
 
 static atomic_t q6_effect_mode = ATOMIC_INIT(-1);
 
@@ -839,34 +838,24 @@ static int msm8930_auxpcm_startup(struct snd_pcm_substream *substream)
 {
 	int ret = 0;
 
-	pr_debug("%s(): substream = %s\n", __func__, substream->name);
-	mutex_lock(&aux_pcm_mutex);
-	aux_pcm_open++;
-	if(aux_pcm_open > 1){
-	   mutex_unlock(&aux_pcm_mutex);
-	   return 0;
-        }
-	ret = msm8930_aux_pcm_get_gpios();
+	pr_debug("%s(): substream = %s, auxpcm_rsc_ref counter = %d\n",
+		__func__, substream->name, atomic_read(&auxpcm_rsc_ref));
+	if (atomic_inc_return(&auxpcm_rsc_ref) == 1)
+		ret = msm8930_aux_pcm_get_gpios();
 	if (ret < 0) {
 		pr_err("%s: Aux PCM GPIO request failed\n", __func__);
-		aux_pcm_open--;
-		mutex_unlock(&aux_pcm_mutex);
 		return -EINVAL;
 	}
-	mutex_unlock(&aux_pcm_mutex);
 	return 0;
 }
 
 static void msm8930_auxpcm_shutdown(struct snd_pcm_substream *substream)
 {
 
-	pr_debug("%s(): substream = %s\n", __func__, substream->name);
-	mutex_lock(&aux_pcm_mutex);
-	aux_pcm_open--;
-	if(aux_pcm_open < 1){
-	   msm8930_aux_pcm_free_gpios();
-	}
-	mutex_unlock(&aux_pcm_mutex);
+	pr_debug("%s(): substream = %s, auxpcm_rsc_ref counter = %d\n",
+		__func__, substream->name, atomic_read(&auxpcm_rsc_ref));
+	if (atomic_dec_return(&auxpcm_rsc_ref) == 0)
+		msm8930_aux_pcm_free_gpios();
 }
 
 static int msm8930_startup(struct snd_pcm_substream *substream)
@@ -1401,7 +1390,8 @@ static int __init opera_audio_init(void)
 	htc_register_q6asm_ops(&qops);
 	htc_register_pcm_routing_ops(&rops);
 	acoustic_register_ops(&acoustic);
-	mutex_init(&aux_pcm_mutex);
+
+	atomic_set(&auxpcm_rsc_ref, 0);
 
 	return ret;
 
@@ -1416,7 +1406,6 @@ static void __exit opera_audio_exit(void)
 	}
 	pr_info("%s", __func__);
 	platform_device_unregister(msm8930_snd_device);
-	mutex_destroy(&aux_pcm_mutex);
 }
 module_exit(opera_audio_exit);
 
