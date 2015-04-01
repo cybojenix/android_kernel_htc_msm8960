@@ -58,14 +58,13 @@ static struct gpiomux_setting cdc_mclk = {
 };
 
 static struct gpiomux_setting audio_auxpcm[] = {
-	
 	{
 		.func = GPIOMUX_FUNC_GPIO,
 		.drv = GPIOMUX_DRV_2MA,
 		.pull = GPIOMUX_PULL_NONE,
 		.dir = GPIOMUX_OUT_LOW,
 	},
-	
+
 	{
 		.func = GPIOMUX_FUNC_1,
 		.drv = GPIOMUX_DRV_2MA,
@@ -74,22 +73,18 @@ static struct gpiomux_setting audio_auxpcm[] = {
 };
 
 static struct gpiomux_setting audio_auxpcm_input[] = {
-        
-        {
-                .func = GPIOMUX_FUNC_GPIO,
-                .drv = GPIOMUX_DRV_2MA,
-                .pull = GPIOMUX_PULL_DOWN,
-                .dir = GPIOMUX_IN,
-        },
-        
-        {
-                .func = GPIOMUX_FUNC_1,
-                .drv = GPIOMUX_DRV_2MA,
-                .pull = GPIOMUX_PULL_NONE,
-        },
+	{
+		.func = GPIOMUX_FUNC_GPIO,
+		.drv = GPIOMUX_DRV_2MA,
+		.pull = GPIOMUX_PULL_DOWN,
+		.dir = GPIOMUX_IN,
+	},
+	{
+		.func = GPIOMUX_FUNC_1,
+		.drv = GPIOMUX_DRV_2MA,
+		.pull = GPIOMUX_PULL_NONE,
+	},
 };
-
-
 
 static struct gpiomux_setting slimbus = {
 	.func = GPIOMUX_FUNC_1,
@@ -121,7 +116,6 @@ static struct gpiomux_setting atmel_ldo_en_act_cfg = {
 	.pull = GPIOMUX_PULL_DOWN,
 };
 
-#ifdef MSM8930_PHASE_2
 static struct gpiomux_setting hsusb_sus_cfg = {
 	.func = GPIOMUX_FUNC_GPIO,
 	.drv = GPIOMUX_DRV_2MA,
@@ -130,32 +124,18 @@ static struct gpiomux_setting hsusb_sus_cfg = {
 };
 static struct msm_gpiomux_config msm8930_hsusb_configs[] = {
 	{
-		.gpio = 63,     
+		.gpio = 63,
 		.settings = {
 			[GPIOMUX_SUSPENDED] = &hsusb_sus_cfg,
 		},
 	},
 	{
-		.gpio = 97,     
+		.gpio = 97,
 		.settings = {
 			[GPIOMUX_SUSPENDED] = &hsusb_sus_cfg,
 		},
 	},
 };
-#endif
-#if 0
-static struct gpiomux_setting hap_lvl_shft_suspended_config = {
-	.func = GPIOMUX_FUNC_GPIO,
-	.drv = GPIOMUX_DRV_2MA,
-	.pull = GPIOMUX_PULL_DOWN,
-};
-
-static struct gpiomux_setting hap_lvl_shft_active_config = {
-	.func = GPIOMUX_FUNC_GPIO,
-	.drv = GPIOMUX_DRV_8MA,
-	.pull = GPIOMUX_PULL_UP,
-};
-#endif
 static struct gpiomux_setting mdp_vsync_suspend_cfg = {
 	.func = GPIOMUX_FUNC_GPIO,
 	.drv = GPIOMUX_DRV_2MA,
@@ -168,40 +148,7 @@ static struct gpiomux_setting mdp_vsync_active_cfg = {
 	.pull = GPIOMUX_PULL_DOWN,
 };
 
-
-
-
 static struct msm_gpiomux_config msm8960_gsbi_configs[] __initdata = {
-#if 0
-	{
-		.gpio      = 6,		
-		.settings = {
-			[GPIOMUX_SUSPENDED] = &spi_suspended_config,
-			[GPIOMUX_ACTIVE] = &spi_active,
-		},
-	},
-	{
-		.gpio      = 7,		
-		.settings = {
-			[GPIOMUX_SUSPENDED] = &spi_suspended_config,
-			[GPIOMUX_ACTIVE] = &spi_active,
-		},
-	},
-	{
-		.gpio      = 8,		
-		.settings = {
-			[GPIOMUX_SUSPENDED] = &spi_suspended_config,
-			[GPIOMUX_ACTIVE] = &spi_active,
-		},
-	},
-	{
-		.gpio      = 9,		
-		.settings = {
-			[GPIOMUX_SUSPENDED] = &spi_suspended_config,
-			[GPIOMUX_ACTIVE] = &spi_active,
-		},
-	},
-#endif
 	{
 		.gpio      = 16,	
 		.settings = {
@@ -245,14 +192,14 @@ static struct msm_gpiomux_config msm8960_gsbi_configs[] __initdata = {
 		},
 	},
 	{
-		.gpio      = 73,	
+		.gpio      = 73,
 		.settings = {
 			[GPIOMUX_SUSPENDED] = &gsbi10,
 			[GPIOMUX_ACTIVE] = &gsbi10,
 		},
 	},
 	{
-		.gpio      = 74,	
+		.gpio      = 74,
 		.settings = {
 			[GPIOMUX_SUSPENDED] = &gsbi10,
 			[GPIOMUX_ACTIVE] = &gsbi10,
@@ -274,21 +221,21 @@ static struct gpiomux_setting  mi2s_suspend_pull_down = {
 
 static struct msm_gpiomux_config msm8930_mi2s_configs[] __initdata = {
 	{
-		.gpio	= 47,		
+		.gpio	= 47,
 		.settings = {
 			[GPIOMUX_SUSPENDED] = &mi2s_suspend_pull_down,
 			[GPIOMUX_ACTIVE] = &mi2s_active,
 		},
 	},
 	{
-		.gpio	= 48,		
+		.gpio	= 48,
 		.settings = {
 			[GPIOMUX_SUSPENDED] = &mi2s_suspend_pull_down,
 			[GPIOMUX_ACTIVE] = &mi2s_active,
 		},
 	},
 	{
-		.gpio	= 49,		
+		.gpio	= 49,
 		.settings = {
 			[GPIOMUX_SUSPENDED] = &mi2s_suspend_pull_down,
 			[GPIOMUX_ACTIVE] = &mi2s_active,
@@ -412,7 +359,7 @@ static struct msm_gpiomux_config wcnss_5wire_interface[] = {
 };
 
 static struct msm_gpiomux_config msm8960_atmel_configs[] __initdata = {
-	{	
+	{
 		.gpio = 50,
 		.settings = {
 			[GPIOMUX_ACTIVE]    = &atmel_ldo_en_act_cfg,
@@ -420,17 +367,6 @@ static struct msm_gpiomux_config msm8960_atmel_configs[] __initdata = {
 		},
 	},
 };
-#if 0
-static struct msm_gpiomux_config hap_lvl_shft_config[] __initdata = {
-	{
-		.gpio = 47,
-		.settings = {
-			[GPIOMUX_SUSPENDED] = &hap_lvl_shft_suspended_config,
-			[GPIOMUX_ACTIVE] = &hap_lvl_shft_active_config,
-		},
-	},
-};
-#endif
 
 static struct msm_gpiomux_config msm8960_mdp_vsync_configs[] __initdata = {
 	{
@@ -442,36 +378,6 @@ static struct msm_gpiomux_config msm8960_mdp_vsync_configs[] __initdata = {
 	}
 };
 
-
-#if 0
-static struct gpiomux_setting haptics_active_cfg = {
-	.func = GPIOMUX_FUNC_GPIO,
-	.drv = GPIOMUX_DRV_8MA,
-	.pull = GPIOMUX_PULL_UP,
-};
-static struct gpiomux_setting haptics_suspend_cfg = {
-	.func = GPIOMUX_FUNC_GPIO,
-	.drv = GPIOMUX_DRV_8MA,
-	.pull = GPIOMUX_PULL_DOWN,
-};
-
-static struct msm_gpiomux_config msm8930_haptics_configs[] __initdata = {
-	{
-		.gpio = 77,
-		.settings = {
-			[GPIOMUX_ACTIVE] = &haptics_active_cfg,
-			[GPIOMUX_SUSPENDED] = &haptics_suspend_cfg,
-		},
-	},
-	{
-		.gpio = 78,
-		.settings = {
-			[GPIOMUX_ACTIVE] = &haptics_active_cfg,
-			[GPIOMUX_SUSPENDED] = &haptics_suspend_cfg,
-		},
-	},
-};
-#endif
 int __init msm8930_init_gpiomux(void)
 {
 	int rc = msm_gpiomux_init(NR_GPIO_IRQS);
@@ -505,11 +411,8 @@ int __init msm8930_init_gpiomux(void)
 
 	if (machine_is_msm8930_mtp() || machine_is_msm8930_fluid() ||
 		machine_is_msm8930_cdp()) {
-
-#ifdef MSM8930_PHASE_2
 		msm_gpiomux_install(msm8930_hsusb_configs,
 			ARRAY_SIZE(msm8930_hsusb_configs));
-#endif
 	}
 
 

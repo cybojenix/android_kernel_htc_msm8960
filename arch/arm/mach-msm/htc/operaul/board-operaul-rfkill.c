@@ -29,39 +29,31 @@ static struct rfkill *bt_rfk;
 static const char bt_name[] = "bcm4334";
 
 static uint32_t operaul_bt_on_table[] = {
-
-	
 	GPIO_CFG(MSM_BT_RTSz,
 				2,
 				GPIO_CFG_OUTPUT,
 				GPIO_CFG_NO_PULL,
 				GPIO_CFG_2MA),
-	
 	GPIO_CFG(MSM_BT_CTSz,
 				2,
 				GPIO_CFG_INPUT,
 				GPIO_CFG_PULL_UP,
 				GPIO_CFG_2MA),
-	
 	GPIO_CFG(MSM_BT_RX,
 				2,
 				GPIO_CFG_INPUT,
 				GPIO_CFG_PULL_UP,
 				GPIO_CFG_2MA),
-	
 	GPIO_CFG(MSM_BT_TX,
 				2,
 				GPIO_CFG_OUTPUT,
 				GPIO_CFG_NO_PULL,
 				GPIO_CFG_2MA),
-
-	
 	GPIO_CFG(MSM_BT_HOST_WAKE,
 				0,
 				GPIO_CFG_INPUT,
 				GPIO_CFG_NO_PULL,
 				GPIO_CFG_2MA),
-	
 	GPIO_CFG(MSM_BT_WAKE,
 				0,
 				GPIO_CFG_OUTPUT,
@@ -109,8 +101,6 @@ static uint32_t operaul_bt_off_table[] = {
 				GPIO_CFG_OUTPUT,
 				GPIO_CFG_NO_PULL,
 				GPIO_CFG_2MA),
-
-	
 	GPIO_CFG(MSM_BT_HOST_WAKE,
 				0,
 				GPIO_CFG_INPUT,
@@ -161,7 +151,6 @@ static void operaul_config_bt_off(void)
 	gpio_set_value(MSM_BT_SHUTDOWNz, 0);
 	mdelay(2);
 
-	
 	config_bt_table(operaul_bt_off_table,
 				ARRAY_SIZE(operaul_bt_off_table));
 	mdelay(2);
@@ -196,11 +185,7 @@ static struct rfkill_ops operaul_rfkill_ops = {
 static int operaul_rfkill_probe(struct platform_device *pdev)
 {
 	int rc = 0;
-	bool default_state = true;  
-
-	
-	
-	
+	bool default_state = true;
 
 	bluetooth_set_power(NULL, default_state);
 
@@ -212,8 +197,6 @@ static int operaul_rfkill_probe(struct platform_device *pdev)
 	}
 
 	rfkill_set_states(bt_rfk, default_state, false);
-
-	
 
 	rc = rfkill_register(bt_rfk);
 	if (rc)
