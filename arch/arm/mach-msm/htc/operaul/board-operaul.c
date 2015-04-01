@@ -292,7 +292,7 @@ static struct platform_device msm8930_android_pmem_audio_device = {
 };
 #endif
 
-struct fmem_platform_data msm8930_fmem_pdata = {
+static struct fmem_platform_data msm8930_fmem_pdata = {
 };
 
 #ifdef CONFIG_SMB349_CHARGER
@@ -437,7 +437,7 @@ static struct platform_device ion_adsp_heap_device = {
 	}
 };
 
-struct ion_platform_heap msm8930_heaps[] = {
+static struct ion_platform_heap msm8930_heaps[] = {
 		{
 			.id	= ION_SYSTEM_HEAP_ID,
 			.type	= ION_HEAP_TYPE_SYSTEM,
@@ -1051,7 +1051,7 @@ static struct sf_lut rbatt_sf_id_2 = {
         }
 };
 
-struct pm8921_bms_battery_data  bms_battery_data_id_2 = {
+static struct pm8921_bms_battery_data  bms_battery_data_id_2 = {
 	.fcc			= 2000,
 	.fcc_temp_lut		= &fcc_temp_id_2,
 	.fcc_sf_lut		= &fcc_sf_id_2,
@@ -1520,7 +1520,7 @@ static struct platform_device qcrypto_device = {
 #endif
 
 
-int64_t k2_operaul_get_usbid_adc(void)
+static int64_t k2_operaul_get_usbid_adc(void)
 {
 	struct pm8xxx_adc_chan_result result;
 	int err = 0, adc =0;
@@ -1691,7 +1691,7 @@ static uint16_t msm_mpm_bypassed_apps_irqs[] __initdata = {
 	RIVA_APPS_WLAN_DATA_XFER_DONE_IRQ,
 };
 
-struct msm_mpm_device_data msm8930_mpm_dev_data __initdata = {
+static struct msm_mpm_device_data msm8930_mpm_dev_data __initdata = {
 	.irqs_m2a = msm_mpm_irqs_m2a,
 	.irqs_m2a_size = ARRAY_SIZE(msm_mpm_irqs_m2a),
 	.bypassed_apps_irqs = msm_mpm_bypassed_apps_irqs,
