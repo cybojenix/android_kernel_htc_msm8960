@@ -38,7 +38,6 @@
 #include <linux/i2c/isl9519.h>
 #include <linux/leds.h>
 #include <linux/leds-pm8xxx.h>
-
 #include <linux/ks8851.h>
 #include <linux/gpio_keys.h>
 #include <linux/memory.h>
@@ -88,11 +87,7 @@
 
 #include <mach/ion.h>
 #include <mach/mdm2.h>
-
-
-#include <mach/msm_cache_dump.h>
 #include <mach/kgsl.h>
-
 #include "timer.h"
 #include "devices.h"
 #include "devices-msm8x60.h"
@@ -100,7 +95,6 @@
 #include "pm.h"
 #include <mach/cpuidle.h>
 #include "rpm_resources.h"
-
 #include "clock.h"
 #include "smd_private.h"
 #include "pm-boot.h"
@@ -136,14 +130,15 @@
 #include <mach/perflock.h>
 #endif
 
-#include <mach/msm_rtb.h>
-
-#define TFA9887_I2C_SLAVE_ADDR  (0x68 >> 1)
-#define RT5501_I2C_SLAVE_ADDR   (0xF0 >> 1)
-
-#ifdef CONFIG_CPU_FREQ_GOV_ONDEMAND_2_PHASE
-int set_two_phase_freq(int cpufreq);
+#ifdef CONFIG_MSM_CACHE_DUMP
+#include <mach/msm_cache_dump.h>
 #endif
+#ifdef CONFIG_MSM_RTB
+#include <mach/msm_rtb.h>
+#endif
+
+
+
 
 static struct platform_device msm_fm_platform_init = {
 	.name = "iris_fm",
@@ -173,9 +168,9 @@ struct sx150x_platform_data msm8930_sx150x_data[] = {
 #define MSM_PMEM_ADSP_SIZE         0x7800000
 #define MSM_PMEM_AUDIO_SIZE        0x4CF000
 #ifdef CONFIG_FB_MSM_HDMI_AS_PRIMARY
-#define MSM_PMEM_SIZE 0x4000000
+#define MSM_PMEM_SIZE 0x4000000 /* 64 Mbytes */
 #else
-#define MSM_PMEM_SIZE 0x2800000
+#define MSM_PMEM_SIZE 0x2800000 /* 40 Mbytes */
 #endif
 
 #define MSM_LIQUID_PMEM_SIZE 0x4000000
@@ -191,7 +186,7 @@ struct sx150x_platform_data msm8930_sx150x_data[] = {
 #else
 #define MSM_ION_SF_SIZE		MSM_PMEM_SIZE
 #define MSM_ION_MM_SIZE		MSM_PMEM_ADSP_SIZE
-#define MSM_ION_QSECOM_SIZE	0x600000
+#define MSM_ION_QSECOM_SIZE	0x600000 /* (6MB) */
 #define MSM_ION_HEAP_NUM	9
 #endif
 #define MSM_ION_MM_FW_SIZE	(0x200000 - HOLE_SIZE) /* 2MB - 128Kb */
@@ -316,7 +311,6 @@ static struct i2c_board_info msm_smb_349_boardinfo[] __initdata = {
 
 #endif
 
-
 #define DSP_RAM_BASE_8960 0x8da00000
 #define DSP_RAM_SIZE_8960 0x1800000
 static int dspcrashd_pdata_8960 = 0xDEADDEAD;
@@ -397,7 +391,9 @@ static struct ion_cp_heap_pdata cp_mm_msm8930_ion_pdata = {
 	.reusable = FMEM_ENABLED,
 	.mem_is_fmem = FMEM_ENABLED,
 	.fixed_position = FIXED_MIDDLE,
-	.is_cma	= 1,
+#ifdef CONFIG_CMA
+	.is_cma = 1,
+#endif
 	.no_nonsecure_alloc = 1,
 };
 
@@ -433,6 +429,7 @@ static struct platform_device ion_mm_heap_device = {
 	}
 };
 
+#ifdef CONFIG_CMA
 static struct platform_device ion_adsp_heap_device = {
 	.name = "ion-adsp-heap-device",
 	.id = -1,
@@ -441,7 +438,19 @@ static struct platform_device ion_adsp_heap_device = {
 		.coherent_dma_mask = DMA_BIT_MASK(32),
 	}
 };
+#endif
 
+/**
+ * These heaps are listed in the order they will be allocated. Due to
+ * video hardware restrictions and content protection the FW heap has to
+ * be allocated adjacent (below) the MM heap and the MFC heap has to be
+ * allocated after the MM heap to ensure MFC heap is not more than 256MB
+ * away from the base address of the FW heap.
+ * However, the order of FW heap and MM heap doesn't matter since these
+ * two heaps are taken care of by separate code to ensure they are adjacent
+ * to each other.
+ * Don't swap the order unless you know what you are doing!
+ */
 static struct ion_platform_heap msm8930_heaps[] = {
 		{
 			.id	= ION_SYSTEM_HEAP_ID,
@@ -520,7 +529,7 @@ static struct platform_device msm8930_ion_dev = {
 };
 #endif
 
-struct platform_device msm8930_fmem_device = {
+static struct platform_device msm8930_fmem_device = {
 	.name = "fmem",
 	.id = 1,
 	.dev = { .platform_data = &msm8930_fmem_pdata },
@@ -550,6 +559,18 @@ static void __init msm8930_reserve_fixed_area(unsigned long fixed_area_size)
 #endif
 }
 
+/**
+ * Reserve memory for ION and calculate amount of reusable memory for fmem.
+ * We only reserve memory for heaps that are not reusable. However, we only
+ * support one reusable heap at the moment so we ignore the reusable flag for
+ * other than the first heap with reusable flag set. Also handle special case
+ * for video heaps (MM,FW, and MFC). Video requires heaps MM and MFC to be
+ * at a higher address than FW in addition to not more than 256MB away from the
+ * base address of the firmware. This means that if MM is reusable the other
+ * two heaps must be allocated in the same region as FW. This is handled by the
+ * mem_is_fmem flag in the platform data. In addition the MM heap must be
+ * adjacent to the FW heap for content protection purposes.
+ */
 static void __init reserve_ion_memory(void)
 {
 #if defined(CONFIG_ION_MSM) && defined(CONFIG_MSM_MULTIMEDIA_USE_ION)
@@ -629,12 +650,11 @@ static void __init reserve_ion_memory(void)
 
 	if (!fixed_size)
 		return;
-
 	/*
 	 * Given the setup for the fixed area, we can't round up all sizes.
 	 * Some sizes must be set up exactly and aligned correctly. Incorrect
 	 * alignments are considered a configuration issue
- 	 */
+	 */
 
 	fixed_low_start = MSM8930_FIXED_AREA_START;
 	if (low_use_cma) {
@@ -781,8 +801,6 @@ static struct htc_battery_platform_data htc_battery_pdev_data = {
 	.overload_curr_thr_ma = 0,
 	.icharger.name = "pm8921",
 	.icharger.sw_safetytimer = 0,
-	.icharger.set_limit_charge_enable = pm8921_limit_charge_enable,
-
 	.icharger.enable_5v_output = NULL,
 	.icharger.get_charging_source = pm8921_get_charging_source,
 	.icharger.get_charging_enabled = pm8921_get_charging_enabled,
@@ -790,6 +808,7 @@ static struct htc_battery_platform_data htc_battery_pdev_data = {
 	.icharger.set_pwrsrc_enable = pm8921_pwrsrc_enable,
 	.icharger.set_pwrsrc_and_charger_enable =
 						pm8921_set_pwrsrc_and_charger_enable,
+	.icharger.set_limit_charge_enable = pm8921_limit_charge_enable,
 	.icharger.is_ovp = pm8921_is_charger_ovp,
 	.icharger.is_batt_temp_fault_disable_chg =
 						pm8921_is_batt_temp_fault_disable_chg,
@@ -799,8 +818,6 @@ static struct htc_battery_platform_data htc_battery_pdev_data = {
 	.icharger.get_attr_text = pm8921_charger_get_attr_text,
 	.icharger.is_safty_timer_timeout = pm8921_is_chg_safety_timer_timeout,
 	.icharger.is_skywork_workaround_enabled = pm8921_is_skywork_workaround_enabled,
-
-
 	.igauge.name = "pm8921",
 	.igauge.get_battery_voltage = pm8921_get_batt_voltage,
 	.igauge.get_battery_current = pm8921_bms_get_batt_current,
@@ -850,9 +867,9 @@ static struct pm8921_charger_batt_param chg_batt_params[] = {
 };
 
 static struct single_row_lut fcc_temp_id_1 = {
-	.x		= {-20, 0, 25, 40, 60},
-	.y		= {1995, 1995, 1970, 1990, 2010},
-	.cols	= 5
+	.x      = {-20, 0, 25, 40, 60},
+	.y      = {1995, 1995, 1970, 1990, 2010},
+	.cols   = 5
 };
 
 static struct single_row_lut fcc_sf_id_1 = {
@@ -872,11 +889,11 @@ static struct sf_lut pc_sf_id_1 = {
 };
 
 static struct pc_temp_ocv_lut  pc_temp_ocv_id_1 = {
-	.rows	= 29,
-	.cols		= 5,
-	.temp	= {-20, 0, 25, 40, 60},
-	.percent	= {100, 95, 90, 85, 80, 75, 70, 65, 60, 55, 50, 45, 40, 35, 30, 25, 20, 15, 10, 9, 8, 7, 6, 5, 4, 3, 2, 1, 0},
-	.ocv		= {
+	.rows       = 29,
+	.cols       = 5,
+	.temp       = {-20, 0, 25, 40, 60},
+	.percent    = {100, 95, 90, 85, 80, 75, 70, 65, 60, 55, 50, 45, 40, 35, 30, 25, 20, 15, 10, 9, 8, 7, 6, 5, 4, 3, 2, 1, 0},
+	.ocv        = {
 				{4300, 4300, 4300, 4300, 4300},
 				{4235, 4251, 4275, 4273, 4272},
 				{4165, 4190, 4211, 4210, 4208},
@@ -914,8 +931,8 @@ static struct sf_lut rbatt_sf_id_1 = {
 	.cols			= 5,
 
 	.row_entries	= {-20, 0, 25, 40, 60},
-	.percent		= {100, 95, 90, 85, 80, 75, 70, 65, 60, 55, 50, 45, 40, 35, 30, 25, 20, 15, 10, 9, 8, 7, 6, 5, 4, 3, 2, 1},
-	.sf 			= {
+	.percent     = {100, 95, 90, 85, 80, 75, 70, 65, 60, 55, 50, 45, 40, 35, 30, 25, 20, 15, 10, 9, 8, 7, 6, 5, 4, 3, 2, 1},
+	.sf          = {
 					{336,213,105,103,101},
 					{336,213,105,103,101},
 					{336,213,105,103,101},
@@ -944,11 +961,11 @@ static struct sf_lut rbatt_sf_id_1 = {
 					{336,213,105,103,101},
 					{336,213,105,103,101},
 					{336,213,105,103,101},
-	}
+		}
 };
 
-struct pm8921_bms_battery_data  bms_battery_data_id_1 = {
-	.fcc			= 2000,
+static struct pm8921_bms_battery_data  bms_battery_data_id_1 = {
+	.fcc		= 2000,
 	.fcc_temp_lut		= &fcc_temp_id_1,
 	.fcc_sf_lut			= &fcc_sf_id_1,
 	.pc_temp_ocv_lut		= &pc_temp_ocv_id_1,
@@ -959,9 +976,9 @@ struct pm8921_bms_battery_data  bms_battery_data_id_1 = {
 };
 
 static struct single_row_lut fcc_temp_id_2 = {
-	.x		= {-20, 0, 25, 40, 60},
-	.y		= {1980, 1980, 1980, 2000, 2000},
-	.cols	= 5
+	.x      = {-20, 0, 25, 40, 60},
+	.y      = {1980, 1980, 1980, 2000, 2000},
+	.cols   = 5
 };
 
 static struct single_row_lut fcc_sf_id_2 = {
@@ -983,8 +1000,8 @@ static struct sf_lut pc_sf_id_2 = {
 
 static struct pc_temp_ocv_lut  pc_temp_ocv_id_2 = {
 	.rows       = 29,
-	.cols		= 5,
-	.temp	= {-20, 0, 25, 40, 60},
+	.cols       = 5,
+	.temp       = {-20, 0, 25, 40, 60},
 	.percent    = {100, 95, 90, 85, 80, 75, 70, 65, 60, 55, 50, 45, 40, 35, 30, 25, 20, 15, 10, 9, 8, 7, 6, 5, 4, 3, 2, 1, 0},
 	.ocv		= {
 				{4260, 4260, 4260, 4260, 4258},
@@ -1054,7 +1071,7 @@ static struct sf_lut rbatt_sf_id_2 = {
 				{269,187,98,98,95},
 				{269,187,98,98,95},
 				{269,187,98,98,95},
-        }
+		}
 };
 
 static struct pm8921_bms_battery_data  bms_battery_data_id_2 = {
@@ -1106,12 +1123,19 @@ static struct htc_battery_cell htc_battery_cells[] = {
 		.gauge_param = NULL,
 	},
 };
-#endif
+#endif /* CONFIG_HTC_BATT_8960 */
 
 static void __init msm8930_allocate_memory_regions(void)
 {
 	operaul_allocate_fb_region();
 }
+
+#define TFA9887_I2C_SLAVE_ADDR  (0x68 >> 1)
+#define RT5501_I2C_SLAVE_ADDR	(0xF0 >> 1)
+
+struct rt5501_platform_data rt5501_data = {
+	.gpio_rt5501_spk_en = MSM_AUD_HP_EN,
+};
 
 #ifdef CONFIG_WCD9304_CODEC
 
@@ -1268,6 +1292,7 @@ static struct slim_boardinfo msm_slim_devices[] = {
 };
 
 #ifdef CONFIG_QSEECOM
+/* qseecom bus scaling */
 static struct msm_bus_vectors qseecom_clks_init_vectors[] = {
 	{
 		.src = MSM_BUS_MASTER_SPS,
@@ -1275,7 +1300,7 @@ static struct msm_bus_vectors qseecom_clks_init_vectors[] = {
 		.ib = 0,
 		.ab = 0,
 	},
-    {
+	{
 		.src = MSM_BUS_MASTER_SPS,
 		.dst = MSM_BUS_SLAVE_SPS,
 		.ib = 0,
@@ -1296,7 +1321,7 @@ static struct msm_bus_vectors qseecom_enable_dfab_vectors[] = {
 		.ib = (492 * 8) * 1000000UL,
 		.ab = (492 * 8) *  100000UL,
 	},
-    {
+	{
 		.src = MSM_BUS_MASTER_SPS,
 		.dst = MSM_BUS_SLAVE_SPS,
 		.ib = (492 * 8) * 1000000UL,
@@ -1317,7 +1342,7 @@ static struct msm_bus_vectors qseecom_enable_sfpb_vectors[] = {
 		.ib = 0,
 		.ab = 0,
 	},
-    {
+	{
 		.src = MSM_BUS_MASTER_SPS,
 		.dst = MSM_BUS_SLAVE_SPS,
 		.ib = 0,
@@ -1387,9 +1412,7 @@ static struct platform_device qseecom_device = {
 #endif
 
 #if defined(CONFIG_CRYPTO_DEV_QCRYPTO) || \
-		defined(CONFIG_CRYPTO_DEV_QCRYPTO_MODULE) || \
-		defined(CONFIG_CRYPTO_DEV_QCEDEV) || \
-		defined(CONFIG_CRYPTO_DEV_QCEDEV_MODULE)
+		defined(CONFIG_CRYPTO_DEV_QCEDEV)
 
 #define QCE_SIZE		0x10000
 #define QCE_0_BASE		0x18500000
@@ -1501,9 +1524,7 @@ static struct resource qcedev_resources[] = {
 };
 #endif
 
-#if defined(CONFIG_CRYPTO_DEV_QCRYPTO) || \
-		defined(CONFIG_CRYPTO_DEV_QCRYPTO_MODULE)
-
+#if defined(CONFIG_CRYPTO_DEV_QCRYPTO)
 static struct msm_ce_hw_support qcrypto_ce_hw_suppport = {
 	.ce_shared = QCE_CE_SHARED,
 	.shared_ce_resource = QCE_SHARE_CE_RESOURCE,
@@ -1549,7 +1570,7 @@ static uint32_t usb_ID_PIN_ouput_table[] = {
 	GPIO_CFG(MSM_USB_ID1, 0, GPIO_CFG_OUTPUT, GPIO_CFG_NO_PULL, GPIO_CFG_2MA),
 };
 
-void config_k2_operaul_usb_id_gpios(bool output)
+static void config_k2_operaul_usb_id_gpios(bool output)
 {
 	if (output) {
 		gpio_tlmm_config(usb_ID_PIN_ouput_table[0], GPIO_CFG_ENABLE);
@@ -1576,21 +1597,7 @@ static struct platform_device cable_detect_device = {
 	},
 };
 
-void opera_cable_detect_register(void)
-{
-	platform_device_register(&cable_detect_device);
-}
-
-void opera_pm8xxx_adc_device_register(void)
-{
-	pr_info("%s: Register PM8XXX ADC device. rev: %d\n",
-		__func__, system_rev);
-	opera_cable_detect_register();
-}
-
-#if defined(CONFIG_CRYPTO_DEV_QCEDEV) || \
-		defined(CONFIG_CRYPTO_DEV_QCEDEV_MODULE)
-
+#if defined(CONFIG_CRYPTO_DEV_QCEDEV)
 static struct msm_ce_hw_support qcedev_ce_hw_suppport = {
 	.ce_shared = QCE_CE_SHARED,
 	.shared_ce_resource = QCE_SHARE_CE_RESOURCE,
@@ -1731,8 +1738,8 @@ static void __init operaul_init_irq(void)
 
 static int cm3629_power(int ls_or_ps, uint8_t enable)
 {
-       static struct regulator *reg_l9;
-       int rc = 0;
+	static struct regulator *reg_l9;
+	int rc = 0;
 
        if (enable) {
 
@@ -1740,8 +1747,8 @@ static int cm3629_power(int ls_or_ps, uint8_t enable)
                if (IS_ERR(reg_l9)) {
                        pr_err("[PS] Not get 8038_l9, ret = %ld\n",
                                PTR_ERR(reg_l9));
-                       return -ENODEV;
-               }
+			return -ENODEV;
+		}
 
                rc = regulator_set_voltage(reg_l9, 2850000, 2850000);
                if (rc)
@@ -1814,24 +1821,24 @@ static struct msm_spi_platform_data msm8930_qup_spi_gsbi10_pdata = {
 static int msm_hsusb_vbus_power(bool on)
 {
 	static int prev_on;
-	int ret;
+	int rc;
 
 	if (on == prev_on)
 		return 0;
 
 	if (on) {
 		ex5v_ctrl.control = PM8XXX_MPP_DOUT_CTRL_HIGH;
-		ret = pm8xxx_mpp_config(PM8038_MPP_PM_TO_SYS(EX5V_MPP), &ex5v_ctrl);
-		if (ret) {
-			pr_err("ext5v enable failed, rc=%d\n", ret);
-			return ret;
+		rc = pm8xxx_mpp_config(PM8038_MPP_PM_TO_SYS(EX5V_MPP), &ex5v_ctrl);
+		if (rc) {
+			pr_err("ext5v enable failed, rc=%d\n", rc);
+			return rc;
 		}
 	} else {
 		ex5v_ctrl.control = PM8XXX_MPP_DOUT_CTRL_LOW;
-		ret = pm8xxx_mpp_config(PM8038_MPP_PM_TO_SYS(EX5V_MPP), &ex5v_ctrl);
-		if (ret) {
-			pr_err("ext5v enable failed, rc=%d\n", ret);
-			return ret;
+		rc = pm8xxx_mpp_config(PM8038_MPP_PM_TO_SYS(EX5V_MPP), &ex5v_ctrl);
+		if (rc) {
+			pr_err("ext5v enable failed, rc=%d\n", rc);
+			return rc;
 		}
 	}
 
@@ -1882,9 +1889,6 @@ static  struct pm8xxx_mpp_config_data ex5v_ctrl = {
 	.level          = PM8921_MPP_DIG_LEVEL_S4,
 };
 
-
-
-
 static int operaul_phy_init_seq[] = {
 	0x3C, 0x81,
 	0x24, 0x82,
@@ -1898,8 +1902,7 @@ static struct msm_otg_platform_data msm_otg_pdata = {
 	.mode			= USB_OTG,
 	.otg_control		= OTG_PMIC_CONTROL,
 	.phy_type		= SNPS_28NM_INTEGRATED_PHY,
-
-	.vbus_power             = msm_hsusb_vbus_power,
+	.vbus_power		= msm_hsusb_vbus_power,
 	.power_budget		= 750,
 #ifdef CONFIG_MSM_BUS_SCALING
 	.bus_scale_table	= &usb_bus_scale_pdata,
@@ -1964,21 +1967,7 @@ out:
 }
 
 static struct android_usb_platform_data android_usb_pdata = {
-	.vendor_id	= 0x0BB4,
-	.product_id	= 0x0dde,
-	.version	= 0x0100,
-	.product_name		= "Android Phone",
-	.manufacturer_name	= "HTC",
-	.num_products = ARRAY_SIZE(usb_products),
-	.products = usb_products,
-	.num_functions = ARRAY_SIZE(usb_functions_all),
-	.functions = usb_functions_all,
 	.update_pid_and_serial_num = usb_diag_update_pid_and_serial_num,
-	.usb_id_pin_gpio	= MSM_USB_ID1,
-	.usb_rmnet_interface = "smd:bam",
-	.usb_diag_interface = "diag",
-	.fserial_init_string = "smd:modem,tty,tty:autobot,tty:serial,tty:autobot",
-	.nluns = 1,
 };
 
 static struct platform_device android_usb_device = {
@@ -1992,25 +1981,6 @@ static struct platform_device android_usb_device = {
 void operaul_add_usb_devices(void)
 {
 	printk(KERN_INFO "%s rev: %d\n", __func__, system_rev);
-	android_usb_pdata.products[0].product_id =
-			android_usb_pdata.product_id;
-
-
-	if (get_radio_flag() & 0x20000) {
-		android_usb_pdata.diag_init = 1;
-		android_usb_pdata.modem_init = 1;
-		android_usb_pdata.rmnet_init = 1;
-	}
-
-
-	if (board_mfg_mode() == 0) {
-		android_usb_pdata.nluns = 1;
-		android_usb_pdata.cdrom_lun = 0x1;
-	}
-	android_usb_pdata.serial_number = board_serialno();
-
-	platform_device_register(&msm8960_device_gadget_peripheral);
-	platform_device_register(&android_usb_device);
 
 	printk(KERN_INFO "%s: OTG_PMIC_CONTROL in rev: %d\n",
 			__func__, system_rev);
@@ -2221,7 +2191,6 @@ static struct msm_spm_platform_data msm_spm_l2_data[] __initdata = {
 	},
 };
 
-#ifdef CONFIG_FLASHLIGHT_TPS61310
 static void config_flashlight_gpios(void)
 {
 	static uint32_t flashlight_gpio_table[] = {
@@ -2248,7 +2217,6 @@ static struct i2c_board_info i2c_tps61310_flashlight[] = {
 		.platform_data = &flashlight_data,
 	},
 };
-#endif
 
 static ssize_t syn_vkeys_show_XC(struct kobject *kobj,
 			struct kobj_attribute *attr, char *buf)
@@ -2304,23 +2272,7 @@ static struct attribute_group syn_properties_attr_group = {
 	.attrs = syn_properties_attrs,
 };
 
-static void syn_init_vkeys_operaul(void)
-{
-	static struct kobject *syn_properties_kobj;
 
-	if (!(syn_properties_kobj = kobject_create_and_add("board_properties", NULL)))
-		pr_err("%s: failed to create board_properties: kobject_create_and_add", __func__);
-	else {
-		if (system_rev <= 1) {
-			if (sysfs_create_group(syn_properties_kobj, &syn_properties_attr_group))
-				pr_err("%s: failed to create board_properties: sysfs_create_group", __func__);
-		} else {
-			if (sysfs_create_group(syn_properties_kobj, &syn_properties_attr_group_XC))
-				pr_err("%s: failed to create board_properties: sysfs_create_group", __func__);
-		}
-	}
-	return;
-}
 static struct synaptics_i2c_rmi_platform_data syn_ts_3k_data[] = {
 	{
 		.version = 0x3332,
@@ -2915,6 +2867,24 @@ static struct i2c_board_info msm_i2c_syn_gsbi3_info[] __initdata = {
 		.irq = MSM_GPIO_TO_INT(MSM_TP_ATTz)
 	},
 };
+static void syn_init_vkeys_operaul(void)
+{
+	static struct kobject *syn_properties_kobj;
+
+	if (!(syn_properties_kobj = kobject_create_and_add("board_properties", NULL)))
+		pr_err("%s: failed to create board_properties: kobject_create_and_add", __func__);
+	else {
+		if (system_rev <= 1) {
+			if (sysfs_create_group(syn_properties_kobj, &syn_properties_attr_group))
+				pr_err("%s: failed to create board_properties: sysfs_create_group", __func__);
+		} else {
+			if (sysfs_create_group(syn_properties_kobj, &syn_properties_attr_group_XC))
+				pr_err("%s: failed to create board_properties: sysfs_create_group", __func__);
+		}
+	}
+	return;
+}
+
 
 static struct pn544_i2c_platform_data nfc_platform_data = {
 	.irq_gpio = MSM_NFC_IRQ,
@@ -3446,20 +3416,18 @@ static struct platform_device msm8930_device_rpm_regulator __devinitdata = {
 	},
 };
 
-#ifdef CONFIG_SERIAL_MSM_HS
+#ifdef CONFIG_BT
 static struct msm_serial_hs_platform_data msm_uart_dm6_pdata = {
 	.inject_rx_on_wakeup = 0,
-
-
 	.bt_wakeup_pin = MSM_BT_WAKE,
 	.host_wakeup_pin = MSM_BT_HOST_WAKE,
 };
-#endif
 
 static struct platform_device operaul_rfkill = {
 	.name = "operaul_rfkill",
 	.id = -1,
 };
+#endif
 
 static struct resource ram_console_resources[] = {
 	{
@@ -3495,20 +3463,14 @@ struct platform_device device_htc_ramdump = {
 	},
 };
 
-static struct platform_device *i2c_qup_devices[] __initdata = {
-	&msm8960_device_qup_i2c_gsbi4,
-	&msm8960_device_qup_i2c_gsbi9,
-};
-
-static struct platform_device *i2c_qup_sglte_devices[] __initdata = {
-	&msm8960_device_qup_i2c_gsbi8,
-};
-
 static struct platform_device *common_devices[] __initdata = {
 	&ram_console_device,
 	&msm8960_device_dmov,
 	&msm8930_device_qup_spi_gsbi10,
 	&msm8960_device_qup_i2c_gsbi3,
+	&msm8960_device_qup_i2c_gsbi4,
+	&msm8960_device_qup_i2c_gsbi8,
+	&msm8960_device_qup_i2c_gsbi9,
 	&msm8960_device_qup_i2c_gsbi12,
 #ifdef CONFIG_BT
 	&msm_device_uart_dm6,
@@ -3525,6 +3487,7 @@ static struct platform_device *common_devices[] __initdata = {
 #endif
 	&msm8960_device_otg,
 	&msm_device_hsusb_host,
+	&android_usb_device,
 	&msm_8960_q6_lpass,
 	&msm_8960_q6_mss_fw,
 	&msm_8960_q6_mss_sw,
@@ -3535,16 +3498,13 @@ static struct platform_device *common_devices[] __initdata = {
 	&qseecom_device,
 #endif
 
-#if defined(CONFIG_CRYPTO_DEV_QCRYPTO) || \
-		defined(CONFIG_CRYPTO_DEV_QCRYPTO_MODULE)
+#if defined(CONFIG_CRYPTO_DEV_QCRYPTO)
 	&qcrypto_device,
 #endif
 
-#if defined(CONFIG_CRYPTO_DEV_QCEDEV) || \
-		defined(CONFIG_CRYPTO_DEV_QCEDEV_MODULE)
+#if defined(CONFIG_CRYPTO_DEV_QCEDEV)
 	&qcedev_device,
 #endif
-
 #ifdef CONFIG_ANDROID_PMEM
 #ifndef CONFIG_MSM_MULTIMEDIA_USE_ION
 	&msm8930_android_pmem_device,
@@ -3576,9 +3536,6 @@ static struct platform_device *common_devices[] __initdata = {
 #ifdef CONFIG_PERFLOCK
         &msm8930_device_perf_lock,
 #endif
-};
-
-static struct platform_device *cdp_devices[] __initdata = {
 
 	&msm_pcm,
 	&msm_pcm_routing,
@@ -3634,7 +3591,9 @@ static struct platform_device *cdp_devices[] __initdata = {
 #if defined(CONFIG_MSM_CAMERA) && defined(CONFIG_RAWCHIP)
 	&operaul_msm_rawchip_device,
 #endif
+};
 
+static struct platform_device *cdp_devices[] __initdata = {
 	&msm8960_device_uart_gsbi3,
 	&msm_cpudai_mi2s,
 	&msm_device_sps,
@@ -3813,9 +3772,7 @@ static struct i2c_board_info msm_i2c_gsbi12_info[] = {
 	},
 };
 
-struct rt5501_platform_data rt5501_data={
-         .gpio_rt5501_spk_en = MSM_AUD_HP_EN,
-};
+
 
 static struct i2c_board_info msm_i2c_gsbi9_rt5501_info[] = {
         {
@@ -4245,9 +4202,6 @@ static void __init operaul_init(void)
 		ARRAY_SIZE(msm_slim_devices));
 	BUG_ON(msm_pm_boot_init(&msm_pm_boot_pdata));
 
-#ifdef CONFIG_CPU_FREQ_GOV_ONDEMAND_2_PHASE
-	set_two_phase_freq(1026000);
-#endif
 
 	operaul_init_keypad();
 	if ((get_kernel_flag() & KERNEL_FLAG_PM_MONITOR) ||

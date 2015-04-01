@@ -95,7 +95,7 @@ struct pm8xxx_mpp_init {
 
 static struct pm8xxx_gpio_init pm8038_gpios[] __initdata = {
 	
-	
+
 };
 
 static struct pm8xxx_mpp_init pm8038_mpps[] __initdata = {
@@ -117,7 +117,6 @@ void __init msm8930_pm8038_gpio_mpp_init(void)
 		}
 	}
 
-	
 	for (i = 0; i < ARRAY_SIZE(pm8038_mpps); i++) {
 		rc = pm8xxx_mpp_config(pm8038_mpps[i].mpp,
 					&pm8038_mpps[i].config);
@@ -166,7 +165,7 @@ static struct pm8xxx_adc_amux pm8xxx_adc_channels_data[] = {
 };
 
 static struct pm8xxx_adc_properties pm8xxx_adc_data = {
-	.adc_vdd_reference	= 1800, 
+	.adc_vdd_reference	= 1800,
 	.bitresolution		= 15,
 	.bipolar                = 0,
 };
@@ -304,7 +303,7 @@ static struct pm8xxx_mpp_platform_data pm8xxx_mpp_pdata __devinitdata = {
 
 static struct pm8xxx_rtc_platform_data pm8xxx_rtc_pdata __devinitdata = {
 	.rtc_write_enable	= true,
-	.rtc_alarm_powerup	= false,
+	.rtc_alarm_powerup      = false,
 };
 
 static struct pm8xxx_pwrkey_platform_data pm8xxx_pwrkey_pdata = {
@@ -449,8 +448,6 @@ static struct led_platform_data pm8038_led_core_pdata = {
 	.leds = pm8038_led_info,
 };
 
-
-
 static struct wled_config_data wled_cfg = {
 	.dig_mod_gen_en = true,
 	.cs_out_en = true,
@@ -470,7 +467,6 @@ static int pm8038_led0_pwm_duty_pcts[64] = {
 			0, 0, 0, 0, 0, 0, 0, 0,
 			0, 0, 0, 0, 0, 0, 0, 0,
 			0, 0, 0, 0, 0, 0, 0, 0
-
 };
 
 static struct pm8xxx_pwm_duty_cycles pm8038_led0_pwm_duty_cycles = {
@@ -539,7 +535,6 @@ static struct pm8xxx_led_platform_data pm8xxx_leds_pdata = {
 	.num_configs = ARRAY_SIZE(pm8038_led_configs),
 };
 
-
 static struct pm8xxx_ccadc_platform_data pm8xxx_ccadc_pdata = {
 	.r_sense		= 10,
 	.calib_delay_ms		= 600000,
@@ -575,7 +570,7 @@ static struct pm8038_platform_data pm8038_platform_data __devinitdata = {
 	.bms_pdata		= &pm8921_bms_pdata,
 	.adc_pdata		= &pm8xxx_adc_pdata,
 	.leds_pdata		= &pm8xxx_leds_pdata,
-	.vibrator_pdata         = &pm8xxx_vib_pdata,
+	.vibrator_pdata		= &pm8xxx_vib_pdata,
 	.ccadc_pdata		= &pm8xxx_ccadc_pdata,
 };
 
@@ -600,7 +595,7 @@ void __init msm8930_init_pmic(void)
 
 	pmic_reset_irq = PM8038_IRQ_BASE + PM8038_RESOUT_IRQ;
 	msm8960_device_ssbi_pmic.dev.platform_data =
-				&msm8930_ssbi_pm8038_pdata;
-	pm8038_platform_data.num_regulators
-		= msm8930_pm8038_regulator_pdata_len;
+		&msm8930_ssbi_pm8038_pdata;
+	pm8038_platform_data.num_regulators =
+        msm8930_pm8038_regulator_pdata_len;
 }
