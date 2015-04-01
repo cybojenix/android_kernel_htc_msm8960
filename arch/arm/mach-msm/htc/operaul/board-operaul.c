@@ -10,80 +10,86 @@
  * GNU General Public License for more details.
  *
  */
+
+#include <asm/hardware/gic.h>
+#include <asm/mach/arch.h>
+
+#include <linux/bma250.h>
 #include <linux/kernel.h>
 #include <linux/platform_device.h>
 #include <linux/io.h>
 #include <linux/irq.h>
-#include <linux/i2c.h>
 #include <linux/i2c/sx150x.h>
-#include <linux/i2c/isl9519.h>
-#include <linux/gpio.h>
 #include <linux/usb/android_composite.h>
 #include <linux/msm_ssbi.h>
 #include <linux/regulator/msm-gpio-regulator.h>
 #include <linux/mfd/pm8xxx/pm8921.h>
 #include <linux/mfd/pm8xxx/pm8xxx-adc.h>
 #include <linux/regulator/consumer.h>
-#include <linux/spi/spi.h>
 #include <linux/slimbus/slimbus.h>
 #include <linux/bootmem.h>
-#ifdef CONFIG_ANDROID_PMEM
-#include <linux/android_pmem.h>
-#endif
+#include <linux/cm3629.h>
 #include <linux/dma-contiguous.h>
 #include <linux/dma-mapping.h>
-#include <linux/platform_data/qcom_crypto_device.h>
+#include <linux/fmem.h>
+#include <linux/gpio.h>
+#include <linux/htc_flashlight.h>
+#include <linux/i2c.h>
+#include <linux/i2c/isl9519.h>
 #include <linux/leds.h>
 #include <linux/leds-pm8xxx.h>
-#include <linux/msm_tsens.h>
+
 #include <linux/ks8851.h>
 #include <linux/gpio_keys.h>
 #include <linux/memory.h>
 #include <linux/memblock.h>
+#include <linux/mfd/wcd9xxx/pdata.h>
+#include <linux/msm_ion.h>
 #include <linux/msm_thermal.h>
-#include <linux/htc_flashlight.h>
+#include <linux/msm_tsens.h>
+#include <linux/platform_data/qcom_crypto_device.h>
+#include <linux/rt5501.h>
+#include <linux/spi/spi.h>
 #include <linux/synaptics_i2c_rmi.h>
-#include <linux/mpu.h>
 #include <linux/akm8963.h>
-#include <linux/bma250.h>
-#include <linux/cm3629.h>
 #include <linux/slimbus/slimbus.h>
 #include <linux/mfd/wcd9xxx/core.h>
-#include <linux/mfd/wcd9xxx/pdata.h>
-
 #include <asm/mach-types.h>
-#include <asm/mach/arch.h>
 #include <asm/setup.h>
-#include <asm/hardware/gic.h>
 #include <asm/mach/mmc.h>
-
 #include <mach/board.h>
-#include <mach/msm_iomap.h>
-#include <mach/msm_spi.h>
-#ifdef CONFIG_USB_MSM_OTG_72K
-#include <mach/msm_hsusb.h>
-#else
-#include <linux/usb/msm_hsusb.h>
-#endif
+#include <linux/tfa9887.h>
 #include <linux/usb/android.h>
+#include <linux/usb/msm_hsusb.h>
 #include <mach/htc_usb.h>
 #include <mach/usbdiag.h>
-#include <mach/socinfo.h>
-#include <mach/rpm.h>
+
 #include <mach/gpio.h>
-#include <mach/gpiomux.h>
+#include <mach/board_htc.h>
+#include <mach/cable_detect.h>
+#include <mach/dma.h>
+#include <mach/htc_headset_gpio.h>
+#include <mach/htc_headset_mgr.h>
+#include <mach/htc_headset_one_wire.h>
+#include <mach/htc_headset_pmic.h>
+#include <mach/iommu_domains.h>
+#include <mach/mpm.h>
+#include <linux/mpu.h>
 #include <mach/msm_bus_board.h>
 #include <mach/msm_memtypes.h>
-#include <mach/dma.h>
+#include <mach/gpiomux.h>
+#include <mach/rpm.h>
+#include <mach/msm_iomap.h>
 #include <mach/msm_serial_hs.h>
+#include <mach/msm_spi.h>
 #include <mach/msm_xo.h>
 #include <mach/restart.h>
+#include <mach/socinfo.h>
 
-#include <linux/msm_ion.h>
 #include <mach/ion.h>
 #include <mach/mdm2.h>
-#include <mach/msm_rtb.h>
-#include <linux/fmem.h>
+
+
 #include <mach/msm_cache_dump.h>
 #include <mach/kgsl.h>
 
@@ -94,35 +100,32 @@
 #include "pm.h"
 #include <mach/cpuidle.h>
 #include "rpm_resources.h"
-#include <mach/mpm.h>
+
 #include "clock.h"
 #include "smd_private.h"
 #include "pm-boot.h"
-#include <mach/board_htc.h>
-#include <mach/msm_watchdog.h>
+#include "msm_watchdog.h"
 #include "board-8930.h"
 #include "board-operaul.h"
 #include <linux/proc_fs.h>
 #include <linux/pn544.h>
-#include <mach/htc_headset_mgr.h>
-#include <mach/htc_headset_pmic.h>
-#include <mach/htc_headset_gpio.h>
-#include <mach/htc_headset_one_wire.h>
+
 #include <mach/htc_util.h>
-#include <mach/cable_detect.h>
+
 #include <mach/msm_serial_hs.h>
-#include <mach/tfa9887.h>
-#include <mach/rt5501.h>
+
 #include <mach/htc_ramdump.h>
+#ifdef CONFIG_ANDROID_PMEM
+#include <linux/android_pmem.h>
+#endif
 #ifdef CONFIG_BT
 #include <mach/htc_bdaddress.h>
 #include <mach/htc_sleep_clk.h>
 #endif
-
 #ifdef CONFIG_HTC_BATT_8960
-#include "mach/htc_battery_8960.h"
-#include "mach/htc_battery_cell.h"
-#include "linux/mfd/pm8xxx/pm8921-charger.h"
+#include <mach/htc_battery_8960.h>
+#include <mach/htc_battery_cell.h>
+#include <linux/mfd/pm8xxx/pm8921-charger.h>
 #endif
 
 #ifdef CONFIG_SMB349_CHARGER
@@ -132,6 +135,8 @@
 #ifdef CONFIG_PERFLOCK
 #include <mach/perflock.h>
 #endif
+
+#include <mach/msm_rtb.h>
 
 #define TFA9887_I2C_SLAVE_ADDR  (0x68 >> 1)
 #define RT5501_I2C_SLAVE_ADDR   (0xF0 >> 1)
