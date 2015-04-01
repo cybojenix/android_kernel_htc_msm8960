@@ -13,17 +13,11 @@
  *
  */
 
-#include <linux/platform_device.h>
-#include <linux/input.h>
-#include <linux/interrupt.h>
 #include <linux/gpio_event.h>
-#include <linux/gpio.h>
+#include <linux/input.h>
 #include <linux/keyreset.h>
-#include <linux/delay.h>
-#include <asm/mach-types.h>
+#include <linux/platform_device.h>
 #include <mach/gpio.h>
-
-
 #include "board-operaul.h"
 
 #undef MODULE_PARAM_PREFIX
@@ -43,10 +37,6 @@ static void config_gpio_table(uint32_t *table, int len)
 }
 
 static struct gpio_event_direct_entry operaul_keypad_input_map[] = {
-	{
-		.gpio = MSM_AP_KPDPWRz,
-		.code = KEY_POWER,
-	},
 	{
 		.gpio = MSM_VOL_UPz,
 		.code = KEY_VOLUMEUP,
@@ -71,23 +61,6 @@ static void operaul_setup_input_gpio(void)
 	config_gpio_table(inputs_gpio_table, ARRAY_SIZE(inputs_gpio_table));
 }
 
-uint32_t hw_clr_gpio_table[] = {
-	GPIO_CFG(RESET_EN_CLRz, 0, GPIO_CFG_INPUT,
-		GPIO_CFG_PULL_UP, GPIO_CFG_2MA),
-	GPIO_CFG(RESET_EN_CLRz, 0, GPIO_CFG_OUTPUT,
-		GPIO_CFG_PULL_UP, GPIO_CFG_2MA),
-};
-
-static void operaul_clear_hw_reset(void)
-{
-	printk(KERN_INFO "[KEY] %s ++++++\n", __func__);
-	gpio_tlmm_config(hw_clr_gpio_table[1], GPIO_CFG_ENABLE);
-	gpio_set_value(RESET_EN_CLRz, 0);
-	msleep(100);
-	gpio_tlmm_config(hw_clr_gpio_table[0], GPIO_CFG_ENABLE);
-	printk(KERN_INFO "[KEY] %s ------\n", __func__);
-}
-
 static struct gpio_event_input_info operaul_keypad_input_info = {
 	.info.func             = gpio_event_input_func,
 	.flags                 = GPIOEDF_PRINT_KEYS,
@@ -99,8 +72,6 @@ static struct gpio_event_input_info operaul_keypad_input_info = {
 # endif
 	.keymap                = operaul_keypad_input_map,
 	.keymap_size           = ARRAY_SIZE(operaul_keypad_input_map),
-	.setup_input_gpio      = operaul_setup_input_gpio,
-	.clear_hw_reset = operaul_clear_hw_reset,
 };
 
 static struct gpio_event_info *operaul_keypad_info[] = {
@@ -124,7 +95,7 @@ static struct platform_device operaul_keypad_input_device = {
 	},
 };
 static struct keyreset_platform_data operaul_reset_keys_pdata = {
-	
+
 	.keys_down = {
 		KEY_POWER,
 		KEY_VOLUMEDOWN,

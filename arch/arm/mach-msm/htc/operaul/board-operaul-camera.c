@@ -17,11 +17,11 @@
 #include <mach/board.h>
 #include <mach/msm_bus_board.h>
 #include <mach/gpiomux.h>
-#include "devices.h"
-#include "board-8930.h"
-#include "board-operaul.h"
 #include <asm/setup.h>
 
+#include "board-8930.h"
+#include "devices.h"
+#include "board-operaul.h"
 #include <linux/spi/spi.h>
 
 #include "board-mahimahi-flashlight.h"
@@ -37,7 +37,7 @@
 #define CAM_PIN_GPIO_RAW_INTR0	MSM_RAW_INTR0
 #define CAM_PIN_GPIO_RAW_INTR1	MSM_RAW_INTR1
 #define CAM_PIN_GPIO_CAM_MCLK0	MSM_RAW_MCLK
-#define CAM_PIN_GPIO_CAM_MCLK1	MSM_CAM2_MCLK	
+#define CAM_PIN_GPIO_CAM_MCLK1	MSM_CAM2_MCLK
 
 #define CAM_PIN_GPIO_CAM_I2C_DAT	MSM_CAM_I2C_SDA	
 #define CAM_PIN_GPIO_CAM_I2C_CLK	MSM_CAM_I2C_SCL	
@@ -58,151 +58,149 @@
 
 static struct gpiomux_setting cam_settings[] = {
 	{
-		.func = GPIOMUX_FUNC_GPIO, 
+		.func = GPIOMUX_FUNC_GPIO,
 		.drv = GPIOMUX_DRV_8MA,
 		.pull = GPIOMUX_PULL_DOWN,
 		.dir = GPIOMUX_IN,
 	},
 
 	{
-		.func = GPIOMUX_FUNC_1, 
+		.func = GPIOMUX_FUNC_1,
 		.drv = GPIOMUX_DRV_8MA,
 		.pull = GPIOMUX_PULL_NONE,
 	},
 
 	{
-		.func = GPIOMUX_FUNC_GPIO, 
+		.func = GPIOMUX_FUNC_GPIO,
 		.drv = GPIOMUX_DRV_8MA,
 		.pull = GPIOMUX_PULL_NONE,
 		.dir = GPIOMUX_OUT_LOW,
 	},
 
 	{
-		.func = GPIOMUX_FUNC_1, 
+		.func = GPIOMUX_FUNC_1,
 		.drv = GPIOMUX_DRV_8MA,
 		.pull = GPIOMUX_PULL_NONE,
 	},
 
 	{
-		.func = GPIOMUX_FUNC_2, 
+		.func = GPIOMUX_FUNC_2,
 		.drv = GPIOMUX_DRV_8MA,
 		.pull = GPIOMUX_PULL_NONE,
 	},
 
 	{
-		.func = GPIOMUX_FUNC_GPIO, 
+		.func = GPIOMUX_FUNC_GPIO,
 		.drv = GPIOMUX_DRV_4MA,
 		.pull = GPIOMUX_PULL_DOWN,
 		.dir = GPIOMUX_IN,
 	},
 
 	{
-		.func = GPIOMUX_FUNC_2, 
+		.func = GPIOMUX_FUNC_2,
 		.drv = GPIOMUX_DRV_2MA,
 		.pull = GPIOMUX_PULL_NONE,
 	},
 
 	{
-		.func = GPIOMUX_FUNC_GPIO, 
+		.func = GPIOMUX_FUNC_GPIO,
 		.drv = GPIOMUX_DRV_2MA,
 		.pull = GPIOMUX_PULL_NONE,
 		.dir = GPIOMUX_IN,
 	},
 
 	{
-		.func = GPIOMUX_FUNC_GPIO, 
+		.func = GPIOMUX_FUNC_GPIO,
 		.drv = GPIOMUX_DRV_2MA,
 		.pull = GPIOMUX_PULL_DOWN,
 		.dir = GPIOMUX_IN,
 	},
 
 	{
-		.func = GPIOMUX_FUNC_GPIO, 
+		.func = GPIOMUX_FUNC_GPIO,
 		.drv = GPIOMUX_DRV_2MA,
 		.pull = GPIOMUX_PULL_NONE,
 		.dir = GPIOMUX_OUT_HIGH,
 	},
 
 	{
-		.func = GPIOMUX_FUNC_GPIO, 
+		.func = GPIOMUX_FUNC_GPIO,
 		.drv = GPIOMUX_DRV_2MA,
 		.pull = GPIOMUX_PULL_NONE,
 		.dir = GPIOMUX_OUT_LOW,
 	},
 };
 
-
 static struct msm_gpiomux_config msm8930_cam_common_configs[] = {
 	{
-		.gpio = CAM_PIN_GPIO_CAM_MCLK0,	
+		.gpio = CAM_PIN_GPIO_CAM_MCLK0,
 		.settings = {
-			[GPIOMUX_ACTIVE]    = &cam_settings[1], 
-			[GPIOMUX_SUSPENDED] = &cam_settings[2], 
+			[GPIOMUX_ACTIVE]    = &cam_settings[1],
+			[GPIOMUX_SUSPENDED] = &cam_settings[2],
 		},
 	},
 	{
-		.gpio = CAM_PIN_GPIO_CAM_MCLK1,	
+		.gpio = CAM_PIN_GPIO_CAM_MCLK1,
 		.settings = {
-			[GPIOMUX_ACTIVE]    = &cam_settings[4], 
-			[GPIOMUX_SUSPENDED] = &cam_settings[2], 
+			[GPIOMUX_ACTIVE]    = &cam_settings[4],
+			[GPIOMUX_SUSPENDED] = &cam_settings[2],
 		},
 	},
-	
 	{
-		.gpio = CAM_PIN_GPIO_CAM_I2C_DAT,	
+		.gpio = CAM_PIN_GPIO_CAM_I2C_DAT,
 		.settings = {
-			[GPIOMUX_ACTIVE]    = &cam_settings[3], 
+			[GPIOMUX_ACTIVE]    = &cam_settings[3],
 			[GPIOMUX_SUSPENDED] = &cam_settings[0],
 		},
 	},
 	{
-		.gpio = CAM_PIN_GPIO_CAM_I2C_CLK,	
+		.gpio = CAM_PIN_GPIO_CAM_I2C_CLK,
 		.settings = {
-			[GPIOMUX_ACTIVE]    = &cam_settings[3], 
+			[GPIOMUX_ACTIVE]    = &cam_settings[3],
 			[GPIOMUX_SUSPENDED] = &cam_settings[0],
 		},
 	},
 	{
-		.gpio = CAM_PIN_GPIO_RAW_INTR0,	
+		.gpio = CAM_PIN_GPIO_RAW_INTR0,
 		.settings = {
-			[GPIOMUX_ACTIVE]    = &cam_settings[7], 
-			[GPIOMUX_SUSPENDED] = &cam_settings[8], 
+			[GPIOMUX_ACTIVE]    = &cam_settings[7],
+			[GPIOMUX_SUSPENDED] = &cam_settings[8],
 		},
 	},
 	{
-		.gpio = CAM_PIN_GPIO_RAW_INTR1,	
+		.gpio = CAM_PIN_GPIO_RAW_INTR1,
 		.settings = {
-			[GPIOMUX_ACTIVE]    = &cam_settings[7], 
-			[GPIOMUX_SUSPENDED] = &cam_settings[8], 
+			[GPIOMUX_ACTIVE]    = &cam_settings[7],
+			[GPIOMUX_SUSPENDED] = &cam_settings[8],
 		},
 	},
-	
+
 	{
 		.gpio      = CAM_PIN_GPIO_MCAM_SPI_CLK,
 		.settings = {
-			[GPIOMUX_ACTIVE] = &cam_settings[4], 
-			[GPIOMUX_SUSPENDED] = &cam_settings[2], 
+			[GPIOMUX_ACTIVE] = &cam_settings[4],
+			[GPIOMUX_SUSPENDED] = &cam_settings[2],
 		},
 	},
 	{
 		.gpio      = CAM_PIN_GPIO_MCAM_SPI_CS0,
 		.settings = {
-			[GPIOMUX_ACTIVE] = &cam_settings[6], 
-			[GPIOMUX_SUSPENDED] = &cam_settings[10], 
+			[GPIOMUX_ACTIVE] = &cam_settings[6],
+			[GPIOMUX_SUSPENDED] = &cam_settings[10],
 		},
 	},
 	{
 		.gpio      = CAM_PIN_GPIO_MCAM_SPI_DI,
 		.settings = {
-			[GPIOMUX_ACTIVE] = &cam_settings[4], 
-			[GPIOMUX_SUSPENDED] = &cam_settings[0], 
+			[GPIOMUX_ACTIVE] = &cam_settings[4],
+			[GPIOMUX_SUSPENDED] = &cam_settings[0],
 		},
 	},
 	{
 		.gpio      = CAM_PIN_GPIO_MCAM_SPI_DO,
 		.settings = {
-			[GPIOMUX_ACTIVE] = &cam_settings[4], 
-			[GPIOMUX_SUSPENDED] = &cam_settings[2], 
+			[GPIOMUX_ACTIVE] = &cam_settings[4],
+			[GPIOMUX_SUSPENDED] = &cam_settings[2],
 		},
 	},
 };
@@ -227,7 +225,6 @@ static struct msm_bus_vectors cam_init_vectors[] = {
 		.ib  = 0,
 	},
 };
-
 
 static struct msm_bus_vectors cam_preview_vectors[] = {
 	{
@@ -550,30 +547,9 @@ struct platform_device operaul_msm_rawchip_device = {
 };
 #endif
 
-#if 0
-static void mclk_switch(int camera_id)
-{
-	int rc = 0;
-
-	rc = gpio_request(CAM_PIN_GPIO_CAM_MCLK1, "CAM_PIN_GPIO_CAM_MCLK1");
-	if (rc == 0) {
-		gpio_direction_output(CAM_PIN_GPIO_CAM_MCLK1, camera_id);
-		gpio_free(CAM_PIN_GPIO_CAM_MCLK1);
-		mdelay(5);
-	}
-	else {
-		pr_err("mclk switch fail\n");
-	}
-}
-#endif
-
 static uint16_t msm_cam_gpio_tbl[] = {
-	CAM_PIN_GPIO_CAM_MCLK0, 
+	CAM_PIN_GPIO_CAM_MCLK0,
 	CAM_PIN_GPIO_CAM_MCLK1,
-#if 0
-	CAM_PIN_GPIO_CAM_I2C_DAT, 
-	CAM_PIN_GPIO_CAM_I2C_CLK, 
-#endif
 	CAM_PIN_GPIO_RAW_INTR0,
 	CAM_PIN_GPIO_RAW_INTR1,
 	CAM_PIN_GPIO_MCAM_SPI_CLK,
@@ -746,14 +722,13 @@ static struct camera_led_est msm_camera_sensor_ov5693_led_table[] = {
 		.min_step = 23,
 		.max_step = 24
 	},
-
 	{
 		.enable = 1,
 		.led_state = FL_MODE_FLASH,
 		.current_ma = 750,
 		.lumen_value = 745,
 		.min_step = 0,
-		.max_step = 22    
+		.max_step = 22
 	},
 	{
 		.enable = 2,
@@ -780,12 +755,12 @@ static struct camera_led_est msm_camera_sensor_ov5693_led_table[] = {
 		.max_step = 0
 	},
 	{
-		.enable = 2,     
+		.enable = 2,
 		.led_state = FL_MODE_FLASH,
 		.current_ma = 750,
 		.lumen_value = 745,
 		.min_step = 271,
-		.max_step = 317    
+		.max_step = 317
 	},
 	{
 		.enable = 0,
@@ -817,7 +792,7 @@ static struct camera_led_est msm_camera_sensor_ov5693_led_table[] = {
 static struct camera_led_info msm_camera_sensor_ov5693_led_info = {
 	.enable = 1,
 	.low_limit_led_state = FL_MODE_TORCH,
-	.max_led_current_ma = 750,  
+	.max_led_current_ma = 750,
 	.num_led_est_table = ARRAY_SIZE(msm_camera_sensor_ov5693_led_table),
 };
 
@@ -1073,7 +1048,7 @@ static struct msm_camera_sensor_info msm_camera_sensor_s5k6a2ya_data = {
 	.camera_type = FRONT_CAMERA_2D,
 	.use_rawchip = RAWCHIP_ENABLE,
 };
-#endif	
+#endif
 
 
 static struct platform_device msm_camera_server = {
