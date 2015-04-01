@@ -17,11 +17,11 @@
 #include <mach/board.h>
 #include <mach/msm_bus_board.h>
 #include <mach/gpiomux.h>
-#include "devices.h"
-#include "board-8930.h"
-#include "board-operaul.h"
 #include <asm/setup.h>
 
+#include "board-8930.h"
+#include "devices.h"
+#include "board-operaul.h"
 #include <linux/spi/spi.h>
 
 #include "board-mahimahi-flashlight.h"
@@ -547,30 +547,9 @@ struct platform_device operaul_msm_rawchip_device = {
 };
 #endif
 
-#if 0
-static void mclk_switch(int camera_id)
-{
-	int rc = 0;
-
-	rc = gpio_request(CAM_PIN_GPIO_CAM_MCLK1, "CAM_PIN_GPIO_CAM_MCLK1");
-	if (rc == 0) {
-		gpio_direction_output(CAM_PIN_GPIO_CAM_MCLK1, camera_id);
-		gpio_free(CAM_PIN_GPIO_CAM_MCLK1);
-		mdelay(5);
-	}
-	else {
-		pr_err("mclk switch fail\n");
-	}
-}
-#endif
-
 static uint16_t msm_cam_gpio_tbl[] = {
 	CAM_PIN_GPIO_CAM_MCLK0,
 	CAM_PIN_GPIO_CAM_MCLK1,
-#if 0
-	CAM_PIN_GPIO_CAM_I2C_DAT, 
-	CAM_PIN_GPIO_CAM_I2C_CLK, 
-#endif
 	CAM_PIN_GPIO_RAW_INTR0,
 	CAM_PIN_GPIO_RAW_INTR1,
 	CAM_PIN_GPIO_MCAM_SPI_CLK,

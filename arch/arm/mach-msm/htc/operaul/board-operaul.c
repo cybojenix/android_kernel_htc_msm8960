@@ -506,7 +506,6 @@ struct ion_platform_heap msm8930_heaps[] = {
 static struct ion_platform_data msm8930_ion_pdata = {
 	.nr = MSM_ION_HEAP_NUM,
 	.heaps = msm8930_heaps,
-
 };
 
 static struct platform_device msm8930_ion_dev = {
@@ -822,25 +821,21 @@ static struct platform_device htc_battery_pdev = {
 };
 
 static struct pm8921_charger_batt_param chg_batt_params[] = {
-	
 	[0] = {
 		.max_voltage = 4200,
 		.cool_bat_voltage = 4200,
 		.warm_bat_voltage = 4000,
 	},
-	
 	[1] = {
 		.max_voltage = 4340,
 		.cool_bat_voltage = 4340,
 		.warm_bat_voltage = 4000,
 	},
-	
 	[2] = {
 		.max_voltage = 4300,
 		.cool_bat_voltage = 4300,
 		.warm_bat_voltage = 4000,
 	},
-	
 	[3] = {
 		.max_voltage = 4350,
 		.cool_bat_voltage = 4350,
@@ -972,7 +967,7 @@ static struct single_row_lut fcc_sf_id_2 = {
 static struct sf_lut pc_sf_id_2 = {
 	.rows	= 1,
 	.cols		= 1,
-        
+
 	.row_entries	= {0},
 	.percent	= {100},
 	.sf		= {
@@ -981,7 +976,7 @@ static struct sf_lut pc_sf_id_2 = {
 };
 
 static struct pc_temp_ocv_lut  pc_temp_ocv_id_2 = {
-	.rows	= 29,
+	.rows       = 29,
 	.cols		= 5,
 	.temp	= {-20, 0, 25, 40, 60},
 	.percent	= {100, 95, 90, 85, 80, 75, 70, 65, 60, 55, 50, 45, 40, 35, 30, 25, 20, 15, 10, 9, 8, 7, 6, 5, 4, 3, 2, 1, 0},
@@ -1252,7 +1247,6 @@ static struct slim_device msm_slim_sitar1p1 = {
 	},
 };
 #endif
-
 
 static struct slim_boardinfo msm_slim_devices[] = {
 #ifdef CONFIG_WCD9304_CODEC
@@ -3690,7 +3684,7 @@ static void __init msm8930_i2c_init(void)
 		msm8960_device_qup_i2c_gsbi8.dev.platform_data =
 					&msm8960_i2c_qup_gsbi8_pdata;
 	else
-		msm8960_device_qup_i2c_gsbi9.dev.platform_data =
+	msm8960_device_qup_i2c_gsbi9.dev.platform_data =
 					&msm8960_i2c_qup_gsbi9_pdata;
 
 	msm8960_device_qup_i2c_gsbi12.dev.platform_data =
@@ -3710,49 +3704,36 @@ static struct msm_rpmrs_level msm_rpmrs_levels[] __initdata = {
 		true,
 		415, 715, 340827, 475,
 	},
-#if 0
-	{
-		MSM_PM_SLEEP_MODE_POWER_COLLAPSE_STANDALONE,
-		MSM_RPMRS_LIMITS(ON, ACTIVE, MAX, ACTIVE),
-		true,
-		1300, 228, 1200000, 2000,
-	},
-#endif
 	{
 		MSM_PM_SLEEP_MODE_POWER_COLLAPSE,
 		MSM_RPMRS_LIMITS(ON, GDHS, MAX, ACTIVE),
 		false,
 		2000, 138, 1208400, 3200,
 	},
-
 	{
 		MSM_PM_SLEEP_MODE_POWER_COLLAPSE,
 		MSM_RPMRS_LIMITS(ON, HSFS_OPEN, ACTIVE, RET_HIGH),
 		false,
 		6000, 119, 1850300, 9000,
 	},
-
 	{
 		MSM_PM_SLEEP_MODE_POWER_COLLAPSE,
 		MSM_RPMRS_LIMITS(OFF, GDHS, MAX, ACTIVE),
 		false,
 		9200, 68, 2839200, 16400,
 	},
-
 	{
 		MSM_PM_SLEEP_MODE_POWER_COLLAPSE,
 		MSM_RPMRS_LIMITS(OFF, HSFS_OPEN, MAX, ACTIVE),
 		false,
 		10300, 63, 3128000, 18200,
 	},
-
 	{
 		MSM_PM_SLEEP_MODE_POWER_COLLAPSE,
 		MSM_RPMRS_LIMITS(OFF, HSFS_OPEN, ACTIVE, RET_HIGH),
 		false,
 		18000, 10, 4602600, 27000,
 	},
-
 	{
 		MSM_PM_SLEEP_MODE_POWER_COLLAPSE,
 		MSM_RPMRS_LIMITS(OFF, HSFS_OPEN, RET_HIGH, RET_LOW),
@@ -3786,7 +3767,6 @@ static struct msm_rpmrs_platform_data msm_rpmrs_data __initdata = {
 		[MSM_RPMRS_ID_VDD_MEM_1]	= MSM_RPM_ID_PM8038_L24_1,
 		[MSM_RPMRS_ID_RPM_CTL]		= MSM_RPM_ID_RPM_CTL,
 	},
-
 };
 
 static struct msm_pm_boot_platform_data msm_pm_boot_pdata __initdata = {
