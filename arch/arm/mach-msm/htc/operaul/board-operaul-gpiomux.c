@@ -58,14 +58,13 @@ static struct gpiomux_setting cdc_mclk = {
 };
 
 static struct gpiomux_setting audio_auxpcm[] = {
-	
 	{
 		.func = GPIOMUX_FUNC_GPIO,
 		.drv = GPIOMUX_DRV_2MA,
 		.pull = GPIOMUX_PULL_NONE,
 		.dir = GPIOMUX_OUT_LOW,
 	},
-	
+
 	{
 		.func = GPIOMUX_FUNC_1,
 		.drv = GPIOMUX_DRV_2MA,
@@ -88,8 +87,6 @@ static struct gpiomux_setting audio_auxpcm_input[] = {
                 .pull = GPIOMUX_PULL_NONE,
         },
 };
-
-
 
 static struct gpiomux_setting slimbus = {
 	.func = GPIOMUX_FUNC_1,
@@ -130,13 +127,13 @@ static struct gpiomux_setting hsusb_sus_cfg = {
 };
 static struct msm_gpiomux_config msm8930_hsusb_configs[] = {
 	{
-		.gpio = 63,     
+		.gpio = 63,
 		.settings = {
 			[GPIOMUX_SUSPENDED] = &hsusb_sus_cfg,
 		},
 	},
 	{
-		.gpio = 97,     
+		.gpio = 97,
 		.settings = {
 			[GPIOMUX_SUSPENDED] = &hsusb_sus_cfg,
 		},
@@ -245,14 +242,14 @@ static struct msm_gpiomux_config msm8960_gsbi_configs[] __initdata = {
 		},
 	},
 	{
-		.gpio      = 73,	
+		.gpio      = 73,
 		.settings = {
 			[GPIOMUX_SUSPENDED] = &gsbi10,
 			[GPIOMUX_ACTIVE] = &gsbi10,
 		},
 	},
 	{
-		.gpio      = 74,	
+		.gpio      = 74,
 		.settings = {
 			[GPIOMUX_SUSPENDED] = &gsbi10,
 			[GPIOMUX_ACTIVE] = &gsbi10,
@@ -274,21 +271,21 @@ static struct gpiomux_setting  mi2s_suspend_pull_down = {
 
 static struct msm_gpiomux_config msm8930_mi2s_configs[] __initdata = {
 	{
-		.gpio	= 47,		
+		.gpio	= 47,
 		.settings = {
 			[GPIOMUX_SUSPENDED] = &mi2s_suspend_pull_down,
 			[GPIOMUX_ACTIVE] = &mi2s_active,
 		},
 	},
 	{
-		.gpio	= 48,		
+		.gpio	= 48,
 		.settings = {
 			[GPIOMUX_SUSPENDED] = &mi2s_suspend_pull_down,
 			[GPIOMUX_ACTIVE] = &mi2s_active,
 		},
 	},
 	{
-		.gpio	= 49,		
+		.gpio	= 49,
 		.settings = {
 			[GPIOMUX_SUSPENDED] = &mi2s_suspend_pull_down,
 			[GPIOMUX_ACTIVE] = &mi2s_active,
@@ -412,7 +409,7 @@ static struct msm_gpiomux_config wcnss_5wire_interface[] = {
 };
 
 static struct msm_gpiomux_config msm8960_atmel_configs[] __initdata = {
-	{	
+	{
 		.gpio = 50,
 		.settings = {
 			[GPIOMUX_ACTIVE]    = &atmel_ldo_en_act_cfg,

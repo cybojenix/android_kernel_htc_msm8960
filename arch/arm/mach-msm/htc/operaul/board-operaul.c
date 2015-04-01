@@ -3811,23 +3811,23 @@ struct i2c_registry {
 
 #ifdef CONFIG_ISL9519_CHARGER
 static struct isl_platform_data isl_data __initdata = {
-	.valid_n_gpio		= 0,	
-	.chg_detection_config	= NULL,	
+	.valid_n_gpio		= 0,
+	.chg_detection_config	= NULL,
 	.max_system_voltage	= 4200,
 	.min_system_voltage	= 3200,
-	.chgcurrent		= 1000, 
-	.term_current		= 400,	
+	.chgcurrent		= 1000,
+	.term_current		= 400,
 	.input_current		= 2048,
 };
 
 static struct i2c_board_info isl_charger_i2c_info[] __initdata = {
 	{
 		I2C_BOARD_INFO("isl9519q", 0x9),
-		.irq		= 0,	
+		.irq		= 0,
 		.platform_data	= &isl_data,
 	},
 };
-#endif 
+#endif
 
 #define OPERAUL_LAYOUTS			{\
 		{ { 0,  1, 0}, { 1,  0,  0}, {0, 0, -1} }, \
@@ -3911,7 +3911,7 @@ static struct i2c_registry msm8960_i2c_devices[] __initdata = {
 		isl_charger_i2c_info,
 		ARRAY_SIZE(isl_charger_i2c_info),
 	},
-#endif 
+#endif
 	{
 		I2C_SURF | I2C_FFA | I2C_FLUID | I2C_EVT,
 		MSM_8930_GSBI12_QUP_I2C_BUS_ID,
