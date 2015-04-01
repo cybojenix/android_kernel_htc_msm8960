@@ -33,7 +33,6 @@
 #include <linux/dma-contiguous.h>
 #include <linux/dma-mapping.h>
 #include <linux/platform_data/qcom_crypto_device.h>
-#include <linux/platform_data/qcom_wcnss_device.h>
 #include <linux/leds.h>
 #include <linux/leds-pm8xxx.h>
 #include <linux/msm_tsens.h>
@@ -1266,49 +1265,6 @@ static struct slim_boardinfo msm_slim_devices[] = {
 		.slim_slave = &msm_slim_sitar1p1,
 	},
 #endif
-	
-};
-
-#define MSM_WCNSS_PHYS	0x03000000
-#define MSM_WCNSS_SIZE	0x280000
-
-static struct resource resources_wcnss_wlan[] = {
-	{
-		.start	= RIVA_APPS_WLAN_RX_DATA_AVAIL_IRQ,
-		.end	= RIVA_APPS_WLAN_RX_DATA_AVAIL_IRQ,
-		.name	= "wcnss_wlanrx_irq",
-		.flags	= IORESOURCE_IRQ,
-	},
-	{
-		.start	= RIVA_APPS_WLAN_DATA_XFER_DONE_IRQ,
-		.end	= RIVA_APPS_WLAN_DATA_XFER_DONE_IRQ,
-		.name	= "wcnss_wlantx_irq",
-		.flags	= IORESOURCE_IRQ,
-	},
-	{
-		.start	= MSM_WCNSS_PHYS,
-		.end	= MSM_WCNSS_PHYS + MSM_WCNSS_SIZE - 1,
-		.name	= "wcnss_mmio",
-		.flags	= IORESOURCE_MEM,
-	},
-	{
-		.start	= 84,
-		.end	= 88,
-		.name	= "wcnss_gpios_5wire",
-		.flags	= IORESOURCE_IO,
-	},
-};
-
-static struct qcom_wcnss_opts qcom_wcnss_pdata = {
-	.has_48mhz_xo	= 1,
-};
-
-static struct platform_device msm_device_wcnss_wlan = {
-	.name		= "wcnss_wlan",
-	.id		= 0,
-	.num_resources	= ARRAY_SIZE(resources_wcnss_wlan),
-	.resource	= resources_wcnss_wlan,
-	.dev		= {.platform_data = &qcom_wcnss_pdata},
 };
 
 #ifdef CONFIG_QSEECOM
@@ -3598,7 +3554,6 @@ static struct platform_device *common_devices[] __initdata = {
 	&msm8960_device_qup_i2c_gsbi3,
 	&msm8960_device_qup_i2c_gsbi12,
 	&msm_slim_ctrl,
-	&msm_device_wcnss_wlan,
 #if defined(CONFIG_QSEECOM)
 		&qseecom_device,
 #endif
